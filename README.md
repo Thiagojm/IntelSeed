@@ -42,7 +42,7 @@ IntelSeed provides access to Intel's RDSEED instruction for generating cryptogra
 1. Install MinGW-w64 (e.g., via MSYS2 or winget: `winget install mingw`).
 2. Compile:
    ```bash
-   gcc -fPIC -mrdseed -O2 -Wall -shared -o librdseed.dll rdseed_bytes.c -Wl,--out-implib,liblibrdseed.a
+   gcc -fPIC -mrdseed -O2 -Wall -shared -o librdseed.dll rdseed_bytes.c
    ```
 
 Place the built library (`librdseed.so` or `librdseed.dll`) in the same directory as the Python module or in your system's library path.
