@@ -67,6 +67,26 @@ The IntelSeed module now supports both Linux and Windows automatically:
 
 For other platforms (e.g., macOS), build a `librdseed.dylib` and extend the detection logic if needed.
 
+## API Reference
+
+### Functions
+
+- `get_bytes(n_bytes: int) -> bytes`: Generate n_bytes of raw entropy
+- `get_bits(n_bits: int) -> bytes`: Generate n_bits of raw entropy (may have extra bits)
+- `get_exact_bits(n_bits: int) -> bytes`: Generate exactly n_bits of raw entropy
+- `is_rdseed_available(library_path: str | None = None) -> bool`: Safely check if RDSEED is available on the current CPU and library loads successfully. Returns False for unsupported CPUs but re-raises other errors (e.g., missing library).
+
+### Classes
+
+- `IntelSeed`: Main class for RDSEED operations
+- `RDSEEDError`: Exception raised when RDSEED operations fail
+
+### Methods
+
+- `IntelSeed.get_bytes(n_bytes: int) -> bytes`: Generate n_bytes of raw entropy
+- `IntelSeed.get_bits(n_bits: int) -> bytes`: Generate n_bits of raw entropy
+- `IntelSeed.get_exact_bits(n_bits: int) -> bytes`: Generate exactly n_bits of raw entropy
+
 ## Usage
 
 ### Basic Usage
@@ -109,24 +129,28 @@ except RDSEEDError as e:
     print(f"RDSEED Error: {e}")
 ```
 
-## API Reference
+### Checking RDSEED Availability
 
-### Functions
+```python
+from intel_seed import is_rdseed_available, RDSEEDError
 
-- `get_bytes(n_bytes: int) -> bytes`: Generate n_bytes of raw entropy
-- `get_bits(n_bits: int) -> bytes`: Generate n_bits of raw entropy (may have extra bits)
-- `get_exact_bits(n_bits: int) -> bytes`: Generate exactly n_bits of raw entropy
+# Check if RDSEED is available (fast and safe)
+available = is_rdseed_available()
 
-### Classes
+if available:
+    print("RDSEED is supported! You can now use hardware entropy.")
+    # Proceed with RDSEED operations
+    from intel_seed import get_bytes
+    data = get_bytes(32)
+else:
+    print("RDSEED not available - falling back to software RNG.")
+    # Use alternative like os.urandom
+    import os
+    data = os.urandom(32)
 
-- `IntelSeed`: Main class for RDSEED operations
-- `RDSEEDError`: Exception raised when RDSEED operations fail
-
-### Methods
-
-- `IntelSeed.get_bytes(n_bytes: int) -> bytes`: Generate n_bytes of raw entropy
-- `IntelSeed.get_bits(n_bits: int) -> bytes`: Generate n_bits of raw entropy
-- `IntelSeed.get_exact_bits(n_bits: int) -> bytes`: Generate exactly n_bits of raw entropy
+# For custom library path:
+# available = is_rdseed_available("/path/to/custom/librdseed.dll")
+```
 
 ## Examples
 
@@ -173,6 +197,28 @@ def random_in_range(min_val, max_val):
 # Generate a random number between 1 and 100
 random_num = random_in_range(1, 100)
 print(f"Random number: {random_num}")
+```
+
+### Conditional RDSEED Usage
+
+```python
+import os
+from intel_seed import is_rdseed_available, get_bytes, RDSEEDError
+
+def generate_secure_bytes(n_bytes: int) -> bytes:
+    """Generate secure random bytes, preferring RDSEED if available."""
+    available = is_rdseed_available()
+    if available:
+        try:
+            return get_bytes(n_bytes)
+        except RDSEEDError:
+            print("RDSEED failed - using fallback.")
+    # Fallback to system RNG
+    return os.urandom(n_bytes)
+
+# Usage
+data = generate_secure_bytes(32)
+print(f"Secure {len(data)} bytes: {data.hex()}")
 ```
 
 ## Error Handling

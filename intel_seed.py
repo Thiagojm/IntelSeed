@@ -9,7 +9,6 @@ import ctypes
 import os
 import math
 import platform
-from typing import Union
 
 
 class RDSEEDError(Exception):
@@ -54,7 +53,7 @@ class IntelSeed:
         
         # Test if RDSEED is available
         try:
-            test_data = self.get_bytes(1)
+            _test_data = self.get_bytes(1)
         except Exception as e:
             raise RDSEEDError(f"RDSEED instruction not available on this CPU: {e}")
     
@@ -136,6 +135,42 @@ class IntelSeed:
             data = data[:-1] + bytes([last_byte])
         
         return data
+
+
+def is_rdseed_available(library_path: str | None = None) -> bool:
+    """
+    Safely check if RDSEED is available on this CPU and the library can load.
+
+    This attempts to instantiate IntelSeed, which tests the RDSEED instruction.
+    It returns False for CPU unsupport but re-raises other errors (e.g., missing library).
+
+    Args:
+        library_path: Optional path to the librdseed library. Defaults to auto-detection
+                      (same as IntelSeed constructor).
+
+    Returns:
+        bool: True if RDSEED is supported and the library loads successfully.
+
+    Raises:
+        RDSEEDError: For non-CPU issues like missing library (so the caller can handle them).
+        OSError: If library loading fails in a way not caught by RDSEEDError.
+    """
+    try:
+        IntelSeed(library_path=library_path)
+        return True
+    except RDSEEDError as e:
+        error_msg = str(e).lower()
+        if "not available on this cpu" in error_msg:
+            # Optional: Log for debugging (remove if not needed)
+            print(f"RDSEED not supported on this CPU: {e}")
+            return False
+        else:
+            # Re-raise other RDSEEDError cases (e.g., library not found)
+            raise
+    except Exception as e:
+        # Catch unexpected issues but treat as unavailable
+        print(f"Unexpected error checking RDSEED: {e}")
+        return False
 
 
 # Global instance for convenience
