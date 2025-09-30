@@ -136,6 +136,38 @@ class IntelSeed:
         
         return data
 
+    def random_int(self, low: int = 0, high: int = 1) -> int:
+        """
+        Generate a cryptographically secure random integer in the range [low, high].
+
+        Uses RDSEED hardware entropy with rejection sampling to ensure uniform distribution
+        without bias. This is suitable for cryptographic or security-sensitive applications.
+
+        Args:
+            low: The lower bound of the range (inclusive). Default: 0.
+            high: The upper bound of the range (inclusive). Default: 1.
+
+        Returns:
+            int: A random integer N where low <= N <= high.
+
+        Raises:
+            ValueError: If high < low.
+            RDSEEDError: If RDSEED fails to generate sufficient entropy.
+        """
+        if high < low:
+            raise ValueError("high must be >= low")
+        if low == high:
+            return low
+        
+        range_size = high - low + 1
+        bits_needed = (range_size - 1).bit_length()
+        
+        while True:
+            data = self.get_exact_bits(bits_needed)
+            value = int.from_bytes(data, 'big')
+            if value < range_size:
+                return low + value
+
 
 def is_rdseed_available(library_path: str | None = None) -> bool:
     """
@@ -209,6 +241,15 @@ def get_exact_bits(n_bits: int) -> bytes:
     Convenience function using the global RDSEED instance.
     """
     return get_rdseed().get_exact_bits(n_bits)
+
+
+def random_int(low: int = 0, high: int = 1) -> int:
+    """
+    Generate a cryptographically secure random integer in the range [low, high].
+
+    Convenience function using the global RDSEED instance. See IntelSeed.random_int for details.
+    """
+    return get_rdseed().random_int(low, high)
 
 
 # Example usage

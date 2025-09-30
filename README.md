@@ -75,6 +75,7 @@ For other platforms (e.g., macOS), build a `librdseed.dylib` and extend the dete
 - `get_bits(n_bits: int) -> bytes`: Generate n_bits of raw entropy (may have extra bits)
 - `get_exact_bits(n_bits: int) -> bytes`: Generate exactly n_bits of raw entropy
 - `is_rdseed_available(library_path: str | None = None) -> bool`: Safely check if RDSEED is available on the current CPU and library loads successfully. Returns False for unsupported CPUs but re-raises other errors (e.g., missing library).
+- `random_int(low: int = 0, high: int = 1) -> int`: Generate a cryptographically secure random integer in the range [low, high] using RDSEED with rejection sampling for uniform distribution.
 
 ### Classes
 
@@ -86,6 +87,7 @@ For other platforms (e.g., macOS), build a `librdseed.dylib` and extend the dete
 - `IntelSeed.get_bytes(n_bytes: int) -> bytes`: Generate n_bytes of raw entropy
 - `IntelSeed.get_bits(n_bits: int) -> bytes`: Generate n_bits of raw entropy
 - `IntelSeed.get_exact_bits(n_bits: int) -> bytes`: Generate exactly n_bits of raw entropy
+- `IntelSeed.random_int(low: int = 0, high: int = 1) -> int`: Generate a cryptographically secure random integer in the range [low, high] using RDSEED.
 
 ## Usage
 
@@ -152,51 +154,55 @@ else:
 # available = is_rdseed_available("/path/to/custom/librdseed.dll")
 ```
 
-## Examples
-
-### Generate a random key
+### Generating Random Integers
 
 ```python
-import intel_seed
+from intel_seed import random_int, RDSEEDError
 
-# Generate a 256-bit AES key
-aes_key = intel_seed.get_exact_bits(256)
-print(f"AES-256 key: {aes_key.hex()}")
-```
+# Random int from 0 to 100 (inclusive)
+num = random_int(0, 100)
+print(f"Random 0-100: {num}")
 
-### Generate random data for testing
+# From 0 to 4 (e.g., 5-sided die)
+die_roll = random_int(0, 4)
+print(f"Die roll 0-4: {die_roll}")
 
-```python
-import intel_seed
-
-# Generate 1KB of random data
-random_data = intel_seed.get_bytes(1024)
-with open("random_data.bin", "wb") as f:
-    f.write(random_data)
+# With error handling
+try:
+    coin_flip = random_int()  # Defaults to 0-1
+    print(f"Coin flip: {coin_flip}")
+except RDSEEDError as e:
+    print(f"RDSEED error: {e}")
 ```
 
 ### Generate random numbers in a range
 
 ```python
-import intel_seed
-import struct
+import os
+from intel_seed import random_int, is_rdseed_available, RDSEEDError
 
-def random_in_range(min_val, max_val):
-    """Generate a random integer in the range [min_val, max_val]."""
-    range_size = max_val - min_val + 1
-    bits_needed = range_size.bit_length()
-    
+def secure_random_int(low: int = 0, high: int = 1) -> int:
+    """Generate a random int [low, high], using RDSEED if available, else os.urandom fallback."""
+    if is_rdseed_available():
+        try:
+            return random_int(low, high)
+        except RDSEEDError:
+            print("RDSEED failed—using fallback.")
+    # Fallback implementation using os.urandom
+    import math
+    range_size = high - low + 1
+    bits_needed = math.ceil(math.log2(range_size))
     while True:
-        # Generate enough bits
-        data = intel_seed.get_exact_bits(bits_needed)
-        value = int.from_bytes(data, 'little')
-        
+        data = os.urandom(math.ceil(bits_needed / 8))
+        value = int.from_bytes(data, 'big') >> (len(data) * 8 - bits_needed)
         if value < range_size:
-            return min_val + value
+            return low + value
 
-# Generate a random number between 1 and 100
-random_num = random_in_range(1, 100)
-print(f"Random number: {random_num}")
+# Examples
+num_100 = secure_random_int(0, 100)
+num_4 = secure_random_int(0, 4)
+print(f"Secure random 0-100: {num_100}")
+print(f"Secure random 0-4: {num_4}")
 ```
 
 ### Conditional RDSEED Usage

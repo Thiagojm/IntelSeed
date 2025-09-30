@@ -12,6 +12,8 @@ from .intel_seed import (
     get_bytes,
     get_bits,
     get_exact_bits,
+    is_rdseed_available,
+    random_int,
 )
 
 __version__ = "1.0.0"
@@ -25,4 +27,6 @@ __all__ = [
     "get_bytes",
     "get_bits",
     "get_exact_bits",
+    "is_rdseed_available",
+    "random_int",
 ]
