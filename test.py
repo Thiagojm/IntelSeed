@@ -4,7 +4,7 @@ from datetime import datetime
 from bitstring import BitArray
 import time
 
-duration = 300
+duration = 3600
 size = 2048
 file_name = "random_data.bin"
 ones_file_name = "ones_data.csv"
