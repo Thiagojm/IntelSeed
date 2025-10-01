@@ -20,7 +20,7 @@ class CustomBuildPy(build_py):
         super().run()
         
         # Compile the C library if source exists
-        c_source = "rdseed_bytes.c"
+        c_source = os.path.join('intel_seed', 'rdseed_bytes.c')
         if not os.path.exists(c_source):
             print(f"Warning: {c_source} not found. Cannot compile library.")
             return
@@ -71,29 +71,28 @@ setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     author="Thiago Jung",
-    author_email="thiagojm1984@hotmail.com",
+    author_email="tjm.plastica@gmail.com",
     packages=find_packages(),
     package_data={
-        "intel_seed": ["librdseed.so", "librdseed.dll"],
+        "intel_seed": ["*.so", "*.dll", "*.c"],
     },
     include_package_data=True,
     cmdclass={"build_py": CustomBuildPy},
     classifiers=[
         "Development Status :: 4 - Beta",
         "Intended Audience :: Developers",
-        "License :: OSI Approved :: MIT License",
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
         "Programming Language :: Python :: 3.11",
         "Programming Language :: Python :: 3.12",
+        "Programming Language :: Python :: 3.13",
         "Topic :: Security :: Cryptography",
         "Topic :: Software Development :: Libraries :: Python Modules",
+        "Operating System :: POSIX :: Linux",
+        "Operating System :: Microsoft :: Windows",
     ],
     python_requires=">=3.8",
     install_requires=[],
-    extras_require={
-        "dev": ["pytest", "black", "flake8"],
-    },
 )

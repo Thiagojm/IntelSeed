@@ -16,9 +16,9 @@ from .intel_seed import (
     random_int,
 )
 
-__version__ = "1.0.0"
+__version__ = "1.1.0"
 __author__ = "Thiago Jung"
-__email__ = "thiagojm1984@hotmail.com"
+__email__ = "tjm.plastica@gmail.com"
 
 __all__ = [
     "IntelSeed",
